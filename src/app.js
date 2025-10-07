@@ -60,15 +60,28 @@ app.use((req, res, next) => {
   next();
 });
 
-const allowedOrigins = process.env.FRONTEND_URL?.split(',') || ['https://fosten-e-commerce-frontend.vercel.app'];
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'), false);
-  },
-  methods: ['GET','POST','PUT','DELETE'],
-  credentials: true,
-})); 
+// -------------------- CORS SETUP --------------------
+const allowedOrigins = process.env.FRONTEND_URL?.split(',') || [
+  'https://fosten-e-commerce-frontend.vercel.app'
+];
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin || allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept, X-CSRF-Token'
+    );
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // -------------------- GLOBAL MIDDLEWARE --------------------
 app.use(express.json({ limit: '10mb' }));
