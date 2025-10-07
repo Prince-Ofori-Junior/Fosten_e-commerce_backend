@@ -27,6 +27,7 @@ const generateToken = (user) =>
 
 const generateRefreshToken = async (user) => {
   if (!isUuid(user.id)) throw new Error("Invalid user ID");
+
   const refreshToken = jwt.sign({ id: user.id }, process.env.JWT_REFRESH_SECRET, {
     expiresIn: "7d",
   });
@@ -36,6 +37,7 @@ const generateRefreshToken = async (user) => {
      VALUES ($1, $2, NOW() + INTERVAL '7 days')`,
     [user.id, refreshToken]
   );
+
   return refreshToken;
 };
 
@@ -59,7 +61,7 @@ const createUserService = async ({ name, email, password, address, phone, role =
 const registerUser = async ({ name, email, password, address, phone }) => {
   try {
     const existingUser = await findUserByEmail(email);
-    if (existingUser) throw new Error("User already exists");
+    if (existingUser) throw { param: "email", message: "User already exists" };
 
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
@@ -80,18 +82,19 @@ const registerUser = async ({ name, email, password, address, phone }) => {
     };
   } catch (err) {
     logger.error(`❌ registerUser failed: ${err.stack || err}`);
-    throw err; // important: rethrow so controller returns 500
+    if (err.param && err.message) throw err; // structured error
+    throw { param: null, message: err.message || "Registration failed" }; // fallback
   }
 };
 
 // -------------------- LOGIN --------------------
 const loginUser = async ({ email, password }, ip) => {
-  if (await isIPBlocked(ip)) throw new Error("Too many failed attempts. Try again later.");
+  if (await isIPBlocked(ip)) throw { param: null, message: "Too many failed attempts. Try again later." };
 
   const user = await findUserByEmail(email);
   if (!user || !user.is_active) {
     await logLoginAttempt(user?.id || null, ip, false);
-    throw new Error("Invalid credentials");
+    throw { param: null, message: "Invalid credentials" };
   }
 
   const isMatch = await bcrypt.compare(password, user.password);
@@ -106,7 +109,7 @@ const loginUser = async ({ email, password }, ip) => {
 
     if (parseInt(rows[0].count, 10) >= 5) await deactivateUser(user.id);
 
-    throw new Error("Invalid credentials");
+    throw { param: null, message: "Invalid credentials" };
   }
 
   await logLoginAttempt(user.id, ip, true);
@@ -128,7 +131,7 @@ const loginUser = async ({ email, password }, ip) => {
 // -------------------- PASSWORD RESET --------------------
 const forgotPassword = async (email) => {
   const user = await findUserByEmail(email);
-  if (!user) throw new Error("No account found with this email");
+  if (!user) throw { param: "email", message: "No account found with this email" };
 
   const resetToken = crypto.randomBytes(32).toString("hex");
   const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
@@ -164,9 +167,7 @@ const resetPassword = async (token, newPassword) => {
   const passwordHash = await bcrypt.hash(newPassword, salt);
 
   await updatePassword(userId, passwordHash);
-  await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [
-    userId,
-  ]);
+  await pool.query(`UPDATE users SET reset_token=NULL, reset_expires=NULL WHERE id=$1`, [userId]);
 
   return true;
 };

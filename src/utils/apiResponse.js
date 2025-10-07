@@ -3,7 +3,7 @@ const apiResponse = (res, statusCode, success, message, data = {}, errors = []) 
   const sanitizedData = sanitize(data);
 
   // Ensure errors are always an array of objects with param & message
-  const safeErrors = Array.isArray(errors)
+  const safeErrors = Array.isArray(errors) && errors.length
     ? errors.map((err) => {
         if (typeof err === "string") return { param: null, message: err };
         return { param: err.param || null, message: err.message || message };
@@ -13,7 +13,9 @@ const apiResponse = (res, statusCode, success, message, data = {}, errors = []) 
   return res.status(statusCode).json({
     success,
     message, // always include message
-    ...(success ? { data: sanitizedData } : { errors: safeErrors.length ? safeErrors : [{ param: null, message }] }),
+    ...(success
+      ? { data: sanitizedData }
+      : { errors: safeErrors }),
   });
 };
 
