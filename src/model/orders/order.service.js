@@ -11,14 +11,17 @@ const logger = require("../../config/logger");
 const { v4: uuidv4 } = require("uuid");
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL =
+  process.env.FRONTEND_URL || "https://fosten-e-commerce-frontend.vercel.app";
 
 // ------------------- PLACE ORDER -------------------
 const placeOrderService = async (userId, orderData) => {
   const { items, totalAmount, paymentMethod, paymentChannel, email, address, phone } = orderData;
 
-  if (!Array.isArray(items) || items.length === 0) throw new Error("Order must have at least one item");
-  if (!totalAmount || totalAmount <= 0) throw new Error("Invalid total amount");
+  if (!Array.isArray(items) || items.length === 0)
+    throw new Error("Order must have at least one item");
+  if (!totalAmount || totalAmount <= 0)
+    throw new Error("Invalid total amount");
 
   const reference = paymentMethod !== "cod" ? `ORD-${uuidv4()}` : null;
   const status = paymentMethod === "cod" ? "pending" : "processing";
@@ -44,12 +47,11 @@ const placeOrderService = async (userId, orderData) => {
       };
 
       if (paymentMethod === "momo") {
-  payload.mobile_money = {
-    phone: phone,              // from frontend payload
-    provider: paymentChannel,  // MTN, Vodafone, Airtel
-  };
-}
-
+        payload.mobile_money = {
+          phone: phone, // from frontend payload
+          provider: paymentChannel, // MTN, Vodafone, AirtelTigo
+        };
+      }
 
       const response = await axios.post(
         "https://api.paystack.co/transaction/initialize",
@@ -68,27 +70,25 @@ const placeOrderService = async (userId, orderData) => {
   return { order, paymentData };
 };
 
-
 // ------------------- VERIFY PAYMENT -------------------
 const verifyOrderService = async (reference) => {
   try {
-    const response = await axios.get(`https://api.paystack.co/transaction/verify/${reference}`, {
-      headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` },
-    });
+    const response = await axios.get(
+      `https://api.paystack.co/transaction/verify/${reference}`,
+      { headers: { Authorization: `Bearer ${PAYSTACK_SECRET_KEY}` } }
+    );
 
     const data = response.data.data;
     const orderId = data.metadata?.orderId;
+    let finalStatus = "cancelled";
 
-    let finalStatus = "cancelled"; // default if anything goes wrong
-
-   if (data.status === "success") {
-  finalStatus = "processing"; // ✅ paid & ready to process
-} else if (["failed", "abandoned", "reversed"].includes(data.status)) {
-  finalStatus = "cancelled";
-} else {
-  finalStatus = "pending"; // or keep it processing
-}
-
+    if (data.status === "success") {
+      finalStatus = "processing";
+    } else if (["failed", "abandoned", "reversed"].includes(data.status)) {
+      finalStatus = "cancelled";
+    } else {
+      finalStatus = "pending";
+    }
 
     if (orderId) {
       await updateOrderStatus(orderId, finalStatus);
@@ -104,15 +104,12 @@ const verifyOrderService = async (reference) => {
 
 // ------------------- WRAPPERS -------------------
 const getUserOrdersService = async (userId) => getUserOrders(userId);
-
 const getOrderService = async (orderId) => {
   const order = await getOrderById(orderId);
   if (!order) throw new Error("Order not found");
   return order;
 };
-
 const updateOrderStatusService = async (orderId, status) => updateOrderStatus(orderId, status);
-
 const listAllOrdersService = async () => getAllOrders();
 
 module.exports = {

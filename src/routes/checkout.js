@@ -21,12 +21,9 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// -------------------- BASE URL (Dynamic) --------------------
-// ✅ Use your deployed backend URL in production, fallback to localhost in dev
-const BASE_URL =
-  process.env.NODE_ENV === "production"
-    ? process.env.BACKEND_URL || "https://fosten-e-commerce-backend.onrender.com"
-    : "http://localhost:8000";
+// -------------------- BASE URL --------------------
+// Always use your deployed backend URL
+const BASE_URL = "https://fosten-e-commerce-backend.onrender.com";
 
 // -------------------- SERVE UPLOADS --------------------
 router.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -49,7 +46,7 @@ router.get("/payment-methods", async (req, res) => {
     `);
 
     const methodsMap = {};
-    rows.forEach(row => {
+    rows.forEach((row) => {
       if (!methodsMap[row.method]) {
         methodsMap[row.method] = {
           id: row.method,
@@ -77,13 +74,11 @@ router.get("/payment-methods", async (req, res) => {
     res.json({ success: true, methods: Object.values(methodsMap) });
   } catch (err) {
     console.error("Failed to fetch payment methods:", err.message);
-    res
-      .status(500)
-      .json({
-        success: false,
-        methods: [],
-        message: "Failed to fetch payment methods",
-      });
+    res.status(500).json({
+      success: false,
+      methods: [],
+      message: "Failed to fetch payment methods",
+    });
   }
 });
 
@@ -187,9 +182,11 @@ router.get("/delivery-details", protect, async (req, res) => {
     res.json({ success: true, data: { id, name, email, address, phone } });
   } catch (err) {
     console.error("Failed to fetch delivery details:", err.message);
-    res
-      .status(500)
-      .json({ success: false, data: null, message: "Failed to fetch delivery details" });
+    res.status(500).json({
+      success: false,
+      data: null,
+      message: "Failed to fetch delivery details",
+    });
   }
 });
 
