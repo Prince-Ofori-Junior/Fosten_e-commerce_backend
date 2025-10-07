@@ -31,6 +31,8 @@ const paymentRoutes = require("./routes/payment"); // Paystack initialize/verify
 const checkoutRoutes = require("./routes/checkout"); // New checkout route
 
 const app = express();
+app.set("trust proxy", 1);
+
 
 // -------------------- SECURITY MIDDLEWARE --------------------
 app.use(helmet({
