@@ -60,19 +60,31 @@ app.use((req, res, next) => {
   next();
 });
 
-// -------------------- CORS --------------------
-const allowedOrigins = process.env.FRONTEND_URL?.split(',') || ['https://fosten-e-commerce-frontend.vercel.app'];
+/// -------------------- CORS --------------------
+const allowedOrigins = process.env.FRONTEND_URL?.split(',') || [
+  'https://fosteng-e-commerce-frontend.vercel.app/',
+  'http://localhost:3000'
+];
 
 app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (allowedOrigins.includes(origin)) {
-    res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-CSRF-Token');
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader(
+      'Access-Control-Allow-Methods',
+      'GET, POST, PUT, DELETE, OPTIONS'
+    );
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+    );
   }
 
-  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(204);
+  }
 
   next();
 });
