@@ -58,28 +58,15 @@ app.use((req, res, next) => {
   next();
 });
 
-
-const allowedOrigins = [
-  'https://fosten-e-commerce-frontend.vercel.app'
-];
-
+const allowedOrigins = process.env.FRONTEND_URL?.split(',') || ['https://fosten-e-commerce-frontend.vercel.app'];
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests from frontend or server-to-server (no origin)
-    if (!origin) return callback(null, true);
-
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error('Not allowed by CORS'), false);
   },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET','POST','PUT','DELETE'],
   credentials: true,
-}));
-
-// Optional: respond to preflight requests
-app.options('*', cors());
+})); 
 
 // -------------------- GLOBAL MIDDLEWARE --------------------
 app.use(express.json({ limit: '10mb' }));
