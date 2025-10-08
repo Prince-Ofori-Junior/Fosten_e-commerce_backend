@@ -65,9 +65,6 @@ app.use((req, res, next) => {
 // -------------------- CORS --------------------
 const allowedOrigins = process.env.FRONTEND_URL?.split(',') || [
   'https://fosten-e-commerce-frontend.vercel.app',
-  'https://fosteng-e-commerce-frontend.vercel.app',
-  'http://localhost:3000',
-  'http://localhost:5173',
 ];
 
 app.use(
