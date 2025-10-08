@@ -116,12 +116,21 @@ app.get('/csrf-token', csrfProtection, (req, res) => {
   res.status(200).json({ csrfToken: req.csrfToken() });
 });
 
-// ✅ Apply CSRF only for unsafe methods
+// ✅ Apply CSRF only for non-API routes (safe for REST APIs like React frontends)
 app.use((req, res, next) => {
   const safeMethods = ['GET', 'HEAD', 'OPTIONS'];
-  if (safeMethods.includes(req.method) || req.path.startsWith('/api/payment')) {
+
+  // Skip CSRF entirely for API endpoints
+  if (req.path.startsWith('/api/')) {
     return next();
   }
+
+  // Skip for safe HTTP methods
+  if (safeMethods.includes(req.method)) {
+    return next();
+  }
+
+  // Apply CSRF protection only to non-API routes (like admin panels, server-rendered views)
   return csrfProtection(req, res, next);
 });
 
