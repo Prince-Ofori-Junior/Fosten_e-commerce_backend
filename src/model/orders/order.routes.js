@@ -37,13 +37,22 @@ router.get("/:orderId", protect, getOrder);
 router.get("/", protect, authorizeRoles("admin"), listAllOrders);
 
 // Admin: update order status
+const Joi = require("joi");
+
 router.patch(
   "/:orderId/status",
   protect,
   authorizeRoles("admin"),
-  validate(["status"]),
+  validate(
+    Joi.object({
+      status: Joi.string()
+        .valid("pending", "processing", "shipped", "delivered", "cancelled", "failed")
+        .required(),
+    })
+  ),
   updateOrderStatus
 );
+
 
 // ------------------- PAYSTACK -------------------
 

@@ -140,9 +140,9 @@ const updateOrderStatus = async (orderId, status) => {
   `;
   const result = await pool.query(query, [status, orderId]);
   if (!result.rows.length) throw new Error("Order not found");
-  logger.info(`✅ Order ${orderId} status updated to ${status}`);
+  logger.info(`✅ Order ${orderId} status updated to ${status}`); 
   return result.rows[0];
-};
+}; 
 
 module.exports = {
   createOrderWithItems,

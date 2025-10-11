@@ -154,7 +154,7 @@ const updateOrderStatus = async (req, res, next) => {
       return res.status(403).json({ success: false, message: "Only admins can update status" });
     }
 
-    const validStatuses = ["pending", "processing", "shipped", "delivered", "cancelled", "failed"];
+    const validStatuses = ["pending", "processing", "shipped", "completed", "cancelled", "failed"];
     const { status } = req.body;
     const { orderId } = req.params;
 
@@ -174,7 +174,7 @@ const updateOrderStatus = async (req, res, next) => {
       return res.status(400).json({ success: false, message: "Order must be processing before shipping" });
     }
 
-    if (status === "delivered") {
+    if (status === "completed") {
       if (!order.approved_by_admin) {
         return res.status(400).json({ success: false, message: "Order must be admin-approved before delivery" });
       }

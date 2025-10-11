@@ -1,34 +1,34 @@
+// modules/products/product.model.js
 const { pool } = require("../../config/db");
 const logger = require("../../config/logger");
 
 // ------------------ Products ------------------
 
-// Create product
-const createProduct = async ({ name, description, price, stock, category_id, type, imageUrl }) => {
+// ✅ Create product
+const createProduct = async ({ name, description, price, stock, category_id, imageUrl }) => {
   const result = await pool.query(
     `INSERT INTO products 
-      (name, description, price, stock, category_id, type, image_url, created_at, updated_at, is_active) 
-     VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), true) 
+      (name, description, price, stock, category_id, image_url, created_at, updated_at, is_active) 
+     VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW(), true) 
      RETURNING *`,
-    [name, description, price, stock, category_id, type, imageUrl]
+    [name, description, price, stock, category_id, imageUrl]
   );
   logger.info(`📦 Product created: ${result.rows[0].id}`);
   return result.rows[0];
 };
 
-// Get paginated products with filters, search, and sorting
-const getProducts = async ({ 
-  page = 1, 
-  limit = 20, 
-  sortBy = "createdAt", 
-  order = "desc", 
-  category, 
-  type,
-  search 
+// ✅ Get paginated products with filters, search, and sorting
+const getProducts = async ({
+  page = 1,
+  limit = 20,
+  sortBy = "createdAt",
+  order = "desc",
+  category,
+  search,
 } = {}) => {
   try {
     const offset = (page - 1) * limit;
-    limit = Math.min(limit, 100); // max 100 per page
+    limit = Math.min(limit, 100); // cap at 100 per page
 
     const sortMap = {
       id: "p.id",
@@ -54,13 +54,8 @@ const getProducts = async ({
     const values = [];
 
     if (category) {
-      values.push(category); // category UUID
+      values.push(category);
       conditions.push(`c.id = $${values.length}`);
-    }
-
-    if (type) {
-      values.push(type);
-      conditions.push(`p.type = $${values.length}`);
     }
 
     if (search) {
@@ -77,7 +72,7 @@ const getProducts = async ({
       [...values, limit, offset]
     );
 
-    // Get total count for pagination
+    // Total count for pagination
     const countQuery = `
       SELECT COUNT(*) AS total
       FROM products p
@@ -95,7 +90,7 @@ const getProducts = async ({
   }
 };
 
-// Get product by ID
+// ✅ Get product by ID
 const getProductById = async (id) => {
   const result = await pool.query(
     "SELECT * FROM products WHERE id = $1 AND is_active = true",
@@ -104,7 +99,7 @@ const getProductById = async (id) => {
   return result.rows[0];
 };
 
-// Update product
+// ✅ Update product
 const updateProduct = async (id, fields) => {
   const keys = Object.keys(fields);
   if (!keys.length) return null;
@@ -123,7 +118,7 @@ const updateProduct = async (id, fields) => {
   return result.rows[0];
 };
 
-// Soft delete product
+// ✅ Soft delete product
 const deleteProduct = async (id) => {
   await pool.query(
     "UPDATE products SET is_active = false, updated_at = NOW() WHERE id = $1",
@@ -135,17 +130,18 @@ const deleteProduct = async (id) => {
 
 // ------------------ Categories ------------------
 
-// Create category
-const createCategory = async (name) => {
+// ✅ Create category
+const createCategory = async (name, description = "") => {
   const result = await pool.query(
-    "INSERT INTO categories (name, created_at, updated_at) VALUES ($1, NOW(), NOW()) RETURNING *",
-    [name]
+    `INSERT INTO categories (name, description, created_at, updated_at)
+     VALUES ($1, $2, NOW(), NOW()) RETURNING *`,
+    [name, description]
   );
   logger.info(`🗂️ Category created: ${result.rows[0].id}`);
   return result.rows[0];
 };
 
-// Get all categories
+// ✅ Get all categories
 const getCategories = async () => {
   const result = await pool.query("SELECT * FROM categories ORDER BY name ASC");
   return result.rows;

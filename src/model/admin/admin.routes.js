@@ -1,4 +1,6 @@
 const express = require("express");
+const router = express.Router();
+
 const {
   listUsers,
   updateUserRole,
@@ -10,17 +12,38 @@ const {
   createTemporaryAdmin,
 } = require("./admin.controller");
 
+const {
+  login,
+  register,
+  forgotPasswordController,
+  resetPasswordController,
+  logoutController,
+} = require("../auth/auth.controller");
+
 const { protect } = require("../../middleware/authMiddleware");
 const { authorizeRoles } = require("../../middleware/roleMiddleware");
 
-const router = express.Router();
+// =============================================================
+// 🔐 AUTH ROUTES (PUBLIC)
+// =============================================================
+router.post("/auth/login", login);
+router.post("/auth/register", register);
+router.post("/auth/forgot-password", forgotPasswordController);
+router.post("/auth/reset-password", resetPasswordController);
 
-// -------------------- BOOTSTRAP ADMIN --------------------
-// 🔹 This must come BEFORE global middleware
+// Logout requires a valid token (so we use protect)
+router.post("/auth/logout", protect, logoutController);
+
+// =============================================================
+// 🧩 BOOTSTRAP TEMP ADMIN (PUBLIC)
+// =============================================================
+// ⚠️ Only for first-time setup; disable in production!
 router.post("/users/temp-admin", createTemporaryAdmin);
 
-// -------------------- GLOBAL MIDDLEWARE --------------------
-// Everything below this line requires admin auth
+// =============================================================
+// 🔒 PROTECTED ADMIN ROUTES
+// =============================================================
+// Everything below this requires an authenticated ADMIN
 router.use(protect);
 router.use(authorizeRoles("admin"));
 
