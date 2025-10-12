@@ -101,7 +101,7 @@ const allowedOrigins = process.env.FRONTEND_URL?.split(',') || [
   'https://fosten-e-commerce-frontend.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
-  'https://e-commerceadmin-beryl.vercel.app/login',
+  'https://fosten-e-commerce-backend.onrender.com/api/admin/',
 ];
 
 app.use(
