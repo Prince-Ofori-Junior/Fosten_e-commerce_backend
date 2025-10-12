@@ -175,7 +175,7 @@ if (process.env.NODE_ENV === 'production') {
 
 // -------------------- ROUTES --------------------
 app.use('/api/auth', authRoutes);
-app.use('/api/admin/orders', orderRoutes);
+app.use('/api/orders', orderRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
