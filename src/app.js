@@ -176,12 +176,12 @@ if (process.env.NODE_ENV === 'production') {
 // -------------------- ROUTES --------------------
 app.use('/api/auth', authRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin/orders', orderRoutes);
+app.use('/api/admin/orders', orderRoutes); // ✅ admin version of orders
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/admin/products', orderRoutes);
+app.use('/api/admin/products', productRoutes); // ✅ FIXED
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/promotions', promotionRoutes);
