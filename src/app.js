@@ -174,17 +174,36 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // -------------------- ROUTES --------------------
+// AUTH
 app.use('/api/auth', authRoutes);
+
+// ORDERS
 app.use('/api/orders', orderRoutes);
-app.use('/api/admin/orders', orderRoutes); // ✅ admin version of orders
+app.use('/api/admin/orders', orderRoutes);
+
+// REVIEWS
 app.use('/api/reviews', reviewRoutes);
+
+// WISHLIST
 app.use('/api/wishlist', wishlistRoutes);
+
+// ADMIN (users, dashboard, etc.)
 app.use('/api/admin', adminRoutes);
+
+// PRODUCTS (public + admin product features)
 app.use('/api/products', productRoutes);
-app.use('/api/admin/products', productRoutes); // ✅ FIXED
+app.use('/api/admin/products', productRoutes); // ✅ FIXED — correct one
+
+// DELIVERY
 app.use('/api/delivery', deliveryRoutes);
+
+// NOTIFICATIONS
 app.use('/api/notifications', notificationRoutes);
+
+// PROMOTIONS
 app.use('/api/promotions', promotionRoutes);
+
+// PAYMENT + CHECKOUT
 app.use('/api/payment', paymentRoutes);
 app.use('/api/checkout', checkoutRoutes);
 
