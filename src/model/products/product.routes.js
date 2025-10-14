@@ -111,6 +111,6 @@ router.post(
 );
 
 // Public: list categories
-router.get("/categories/list", getCategories);
+router.get("/categories", getCategories);
 
 module.exports = router;
