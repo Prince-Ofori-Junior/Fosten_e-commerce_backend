@@ -17,49 +17,29 @@ const isUuid = (id) =>
 
 // ------------------ Products ------------------
 const addProductService = async (data, file) => {
-  if (!data.name || !data.price || !data.stock) {
-    throw new Error("Name, price, and stock are required");
+  if (!data.name || !data.price || !data.stock || !data.category_id) {
+    throw new Error("Name, price, stock, and category_id are required");
   }
 
-  // ✅ Check that at least one of category_id or type is provided
-  if (!data.category_id && !data.type) {
-    throw new Error("Either category_id or type is required");
-  }
-
-  // ✅ Validate category_id if provided
-  if (data.category_id && !isUuid(data.category_id)) {
+  if (!isUuid(data.category_id)) {
     throw new Error("Valid category_id (UUID) is required");
   }
 
-  // ✅ Validate and normalize type if provided
-  let productType = null;
-  if (data.type) {
-    const allowedTypes = ["furniture", "electronics", "clothing", "grocery", "other"];
-    productType = data.type.toLowerCase().trim();
-    if (!allowedTypes.includes(productType)) {
-      throw new Error(`Invalid product type. Must be one of: ${allowedTypes.join(", ")}`);
-    }
-  }
-
-  // ✅ Upload image to Cloudinary if provided
   if (file) {
     const uploaded = await uploadToCloudinary(file.path, { folder: "ecommerce/products" });
     data.imageUrl = uploaded.secure_url;
   }
 
-  // ✅ Create product record
   const product = await createProduct({
     name: data.name.trim(),
     description: data.description?.trim() || "",
     price: parseFloat(data.price),
     stock: parseInt(data.stock),
-    category_id: data.category_id || null,
-    type: productType,
-    isActive: data.isActive ?? true,
+    category_id: data.category_id,
     imageUrl: data.imageUrl || null,
   });
 
-  logger.info(`Product created: ${product.id} - ${product.name} [${product.type || "no type"}]`);
+  logger.info(`Product created: ${product.id} - ${product.name}`);
   return product;
 };
 
@@ -71,24 +51,9 @@ const editProductService = async (id, fields, file) => {
   if (fields.description) updateFields.description = fields.description.trim();
   if (fields.price !== undefined) updateFields.price = parseFloat(fields.price);
   if (fields.stock !== undefined) updateFields.stock = parseInt(fields.stock);
-
   if (fields.category_id) {
     if (!isUuid(fields.category_id)) throw new Error("Valid category_id (UUID) is required");
     updateFields.category_id = fields.category_id;
-  }
-
-  // ✅ Optional type update
-  if (fields.type) {
-    const allowedTypes = ["furniture", "electronics", "clothing", "grocery", "other"];
-    const normalizedType = fields.type.toLowerCase().trim();
-    if (!allowedTypes.includes(normalizedType)) {
-      throw new Error(`Invalid product type. Must be one of: ${allowedTypes.join(", ")}`);
-    }
-    updateFields.type = normalizedType;
-  }
-
-  if (fields.isActive !== undefined) {
-    updateFields.isActive = fields.isActive;
   }
 
   if (file) {
@@ -104,30 +69,15 @@ const editProductService = async (id, fields, file) => {
 };
 
 // ------------------ List, Get, Delete ------------------
-const listProductsService = async ({
-  page = 1,
-  limit = 20,
-  sortBy = "created_at",
-  order = "desc",
-  category,
-  search,
-  type,
-}) => {
+const listProductsService = async ({ page = 1, limit = 20, sortBy = "createdAt", order = "desc", category, search }) => {
   const safePage = Math.max(parseInt(page, 10), 1);
   const safeLimit = Math.min(Math.max(parseInt(limit, 10), 1), 100);
 
-  const filters = {
-    page: safePage,
-    limit: safeLimit,
-    sortBy,
-    order: order.toUpperCase() === "ASC" ? "ASC" : "DESC",
-    category: category?.trim() || null,
-    search: search?.trim() || null,
-    type: type?.trim().toLowerCase() || null,
-  };
+  if (category) category = category.trim();
+  if (search) search = search.trim();
+  order = order.trim().toUpperCase() === "ASC" ? "ASC" : "DESC";
 
-  // ✅ Model handles filtering by both category and type
-  return await getProducts(filters);
+  return await getProducts({ page: safePage, limit: safeLimit, sortBy, order, category, search });
 };
 
 const getSingleProductService = async (id) => {
@@ -144,20 +94,15 @@ const removeProductService = async (id) => {
 };
 
 // ------------------ Categories ------------------
-const addCategoryService = async (name, description = "") => {
+const addCategoryService = async (name) => {
   if (!name || !name.trim()) throw new Error("Category name is required");
-  const category = await createCategory(name.trim(), description.trim());
+  const category = await createCategory(name.trim());
   logger.info(`Category created: ${category.id} - ${category.name}`);
   return category;
 };
 
-const listCategoriesService = async () => {
-  const categories = await getCategories();
-  if (!categories.length) logger.info("No categories found");
-  return categories;
-};
+const listCategoriesService = async () => getCategories();
 
-// ------------------ Exports ------------------
 module.exports = {
   addProduct: addProductService,
   listProducts: listProductsService,

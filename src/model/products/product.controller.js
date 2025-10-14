@@ -12,46 +12,27 @@ const {
 const Joi = require("joi");
 
 // ------------------ Validation Schemas ------------------
-
-// ✅ Product validation
 const productSchema = Joi.object({
   name: Joi.string().max(255).required(),
   description: Joi.string().max(2000).optional(),
   price: Joi.number().positive().required(),
   stock: Joi.number().integer().min(0).required(),
-  category_id: Joi.string().guid({ version: "uuidv4" }).optional(),
-  type: Joi.string().max(100).optional(),
+  category_id: Joi.string().guid({ version: "uuidv4" }).required(),
   isActive: Joi.boolean().optional(),
 });
 
-// ✅ Category validation
 const categorySchema = Joi.object({
   name: Joi.string().max(255).required(),
-  description: Joi.string().max(1000).optional(),
+  description: Joi.string().allow("").optional(),
 });
 
-// ✅ Query validation for listing
-const productQuerySchema = Joi.object({
-  page: Joi.number().integer().min(1).default(1),
-  limit: Joi.number().integer().min(1).max(100).default(20),
-  sortBy: Joi.string().valid("name", "price", "created_at").default("created_at"),
-  order: Joi.string().valid("asc", "desc").default("desc"),
-  category: Joi.string().optional(),
-  type: Joi.string().optional(),
-  search: Joi.string().optional(),
-});
-
-// ------------------ Controllers ------------------
+// ------------------ Products ------------------
 
 // ✅ Admin: create product
 const createProductController = async (req, res) => {
   try {
     const { error } = productSchema.validate(req.body);
     if (error) return apiResponse(res, 400, false, error.details[0].message);
-
-    if (!req.body.category_id && !req.body.type) {
-      return apiResponse(res, 400, false, "Either category_id or type is required");
-    }
 
     if (!req.file)
       return apiResponse(res, 400, false, "Product image is required");
@@ -66,14 +47,25 @@ const createProductController = async (req, res) => {
   }
 };
 
-// ✅ Public: list products (supports category + type filters)
+// ✅ Public: list products
 const getProductsController = async (req, res) => {
   try {
-    const { error, value } = productQuerySchema.validate(req.query);
-    if (error) return apiResponse(res, 400, false, error.details[0].message);
-
-    const data = await listProducts(value);
-
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = "created_at",
+      order = "desc",
+      category,
+      search,
+    } = req.query;
+    const data = await listProducts({
+      page,
+      limit,
+      sortBy,
+      order,
+      category,
+      search,
+    });
     return apiResponse(res, 200, true, "Products fetched successfully", data);
   } catch (err) {
     console.error("❌ Error in getProductsController:", err.message);
@@ -157,7 +149,6 @@ const getCategoriesController = async (_req, res) => {
   }
 };
 
-// ------------------ Exports ------------------
 module.exports = {
   createProduct: createProductController,
   getProducts: getProductsController,
